@@ -13,7 +13,7 @@ class SecurityConfig {
         http
             .csrf { it.disable() }
             .authorizeHttpRequests {
-                it.requestMatchers("/google/calendar/**").permitAll()
+                it.requestMatchers("/google/**").permitAll()
                  .anyRequest().authenticated()
             }
             .httpBasic { }
