@@ -13,7 +13,7 @@ class SecurityConfig {
         http
             .csrf { it.disable() }
             .authorizeHttpRequests {
-                it.requestMatchers("/google/**", "/v1/users/**").permitAll()
+                it.requestMatchers("/google/**", "/v1/users/**","/actuator/**").permitAll()
                  .anyRequest().authenticated()
             }
             .httpBasic { }
