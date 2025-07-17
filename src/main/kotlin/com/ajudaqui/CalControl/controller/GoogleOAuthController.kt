@@ -26,23 +26,20 @@ class GoogleOAuthController(private val googleOAuthService: GoogleOAuthService) 
     return googleOAuthService.listEvents(token)
   }
 
-  @PostMapping("/calendar/token")
-  fun exchangeCodeForToken(@RequestParam code: String): Map<String, Any>? {
-    logger.info("[POST] |/google/calendar/token | ")
+  // @PostMapping("/calendar/token")
+  // fun exchangeCodeForToken(@RequestParam code: String): Map<String, Any>? {
+  //   logger.info("[POST] |/google/calendar/token | ")
 
-    return googleOAuthService.exchangeCodeForToken()
-  }
+  //   return googleOAuthService.exchangeCodeForToken()
+  // }
 
   @GetMapping("/authentication")
-  fun redirecgGoogle(): ResponseEntity<Void> {
-    println("chamando aqui...")
-    var headers= HttpHeaders()
-    headers.location= googleOAuthService.authorizedUri()
-    return ResponseEntity(headers, HttpStatus.FOUND)
-  }
+  fun redirecgGoogle(): ResponseEntity<Void> =
+          ResponseEntity(
+                  HttpHeaders().apply { location = googleOAuthService.authorizedUri() },
+                  HttpStatus.FOUND
+          )
   @GetMapping("/authenticated")
   fun autorizado(@RequestParam code: String): ResponseEntity<Any> =
-    ResponseEntity.ok(googleOAuthService.validToken(code))
-
-
+          ResponseEntity.ok(googleOAuthService.validToken(code))
 }
