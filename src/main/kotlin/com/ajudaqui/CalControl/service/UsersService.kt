@@ -16,11 +16,14 @@ class UsersService(
         private val jwtUtils: JwtUtils,
 ) {
   fun create(usersDTO: UsersDTO): Users {
+    print(usersDTO)
     userRepository.findByEmail(usersDTO.email).ifPresent {
       throw MessageException("Email já cadastrado")
     }
     return save(usersDTO.toUsers())
   }
+
+  fun findAll() = userRepository.findAll()
 
   fun findByEmail(email: String): Users =
           userRepository.findByEmail(email).orElseThrow {
@@ -45,12 +48,20 @@ class UsersService(
 
   fun attUserByAuthGoogle(auth: Map<String, Any>) {
     val idToken = auth["id_token"] as? String ?: ""
+    println()
+    println()
+    println(auth.keys)
+    println()
+    println()
+    var emailByToken = jwtUtils.getEmailFromJwkToken(idToken) ?: ""
 
     val user =
             userRepository
-                    .findByEmail(jwtUtils.getEmailFromJwkToken(idToken)!!)
+                    .findByEmail(emailByToken)
                     .map { user ->
                       user.apply {
+                        email = emailByToken
+                        refreshToken= auth["refresh_token"] as? String
                         accessToken = auth["access_token"] as? String
                         refreshTokenExpiresIn =
                                 (auth["refresh_token_expires_in"] as? Number)?.toLong()
@@ -59,14 +70,18 @@ class UsersService(
                       }
                     }
                     .orElseGet { factorUserAuthGoogle(auth) }
-
+    if (user.email.isEmpty()) {
+      throw NotFoundException("email vaioz...")
+    }
     userRepository.save(user)
   }
 
   private fun factorUserAuthGoogle(auth: Map<String, Any>): Users {
+    val emailForToken = jwtUtils.getEmailFromJwkToken(auth["id_token"] as? String ?: "") ?: ""
     return Users(
-            email = auth["email"] as? String ?: "",
+            email = emailForToken,
             accessToken = auth["access_token"] as? String,
+            refreshToken= auth["refresh_token"] as? String,
             refreshTokenExpiresIn = (auth["refresh_token_expires_in"] as? Number)?.toLong(),
             scope = auth["scope"] as? String,
             tokenType = auth["token_type"] as? String,

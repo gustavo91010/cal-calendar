@@ -19,6 +19,10 @@ class UsersController(private val usersService: UsersService) {
     fun create(@RequestBody usersDTO: UsersDTO): ResponseEntity<Users> =
         ResponseEntity.ok(usersService.create(usersDTO))
 
+    @GetMapping("/all")
+    fun findAll()=
+        ResponseEntity.ok().body(usersService.findAll())
+
     @GetMapping("/email/{email}")
     fun findByEmail(@PathVariable email: String): ResponseEntity<Users> =
         ResponseEntity.ok().body(usersService.findByEmail(email))

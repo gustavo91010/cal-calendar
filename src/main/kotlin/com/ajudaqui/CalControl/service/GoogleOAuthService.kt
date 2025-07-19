@@ -1,7 +1,5 @@
 package com.ajudaqui.CalControl.service
 
-import com.ajudaqui.CalControl.dto.UsersUpdateDTO
-import com.ajudaqui.CalControl.utils.JwtUtils
 import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -71,8 +69,11 @@ class GoogleOAuthService(
     val scopeEncode = URLEncoder.encode(scopeRaw, StandardCharsets.UTF_8.toString())
     val scope = "&scope=$scopeEncode"
     val responseType = "&response_type=code"
-    val prompt = "&prompt=select_account"
-    return URI.create(uriGoogleAuth + params + scope + responseType + prompt)
+    // val prompt = "&prompt=select_account"
+    val prompt = "&prompt=consent" // Forca sempre vri o refrestoken
+
+    val accessType = "&access_type=offline"
+    return URI.create(uriGoogleAuth + params + scope + responseType + prompt + accessType)
   }
 
   fun validToken(code: String): String {
@@ -81,6 +82,4 @@ class GoogleOAuthService(
 
     return "Autenticação conluida"
   }
-
-
 }

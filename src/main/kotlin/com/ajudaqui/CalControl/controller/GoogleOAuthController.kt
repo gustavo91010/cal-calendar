@@ -33,12 +33,15 @@ class GoogleOAuthController(private val googleOAuthService: GoogleOAuthService) 
   //   return googleOAuthService.exchangeCodeForToken()
   // }
 
+  // Abre a pagina de autenticação com a uri fornecida
   @GetMapping("/authentication")
   fun redirecgGoogle(): ResponseEntity<Void> =
           ResponseEntity(
                   HttpHeaders().apply { location = googleOAuthService.authorizedUri() },
                   HttpStatus.FOUND
           )
+
+          // Se a autenticação der certo, ele chama aqui, já autenticado
   @GetMapping("/authenticated")
   fun autorizado(@RequestParam code: String): ResponseEntity<Any> =
           ResponseEntity.ok(googleOAuthService.validToken(code))

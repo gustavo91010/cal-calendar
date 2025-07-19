@@ -14,6 +14,7 @@ data class Users(
         @Id @GeneratedValue(strategy = GenerationType.IDENTITY) val id: Long? = null,
         var email: String,
         @Column(name = "access_token") var accessToken: String? = null,
+        @Column(name = "refresh_token") var refreshToken: String? = null, 
         @Column(name = "refresh_token_expires_in") var refreshTokenExpiresIn: Long? = null,
         var scope: String? = null,
         var tokenType: String? = null,
