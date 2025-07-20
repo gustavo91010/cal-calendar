@@ -1,4 +1,4 @@
-package com.ajudaqui.CalControl.dto
+package com.ajudaqui.CalControl.response
 
 data class CalendarEventsResponse(
         val kind: String,

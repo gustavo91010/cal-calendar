@@ -1,7 +1,8 @@
 package com.ajudaqui.CalControl.controller
 
 import com.ajudaqui.CalControl.service.GoogleOAuthService
-import com.ajudaqui.CalControl.dto.CalendarEventsResponse
+import com.ajudaqui.CalControl.response.CalendarEventsResponse
+import com.ajudaqui.CalControl.response.EventItem
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -11,13 +12,21 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.PostMapping
 
 @RestController
 @RequestMapping("/google")
 class GoogleOAuthController(private val googleOAuthService: GoogleOAuthService) {
 
   private val logger = LoggerFactory.getLogger(GoogleOAuthController::class.java)
-  @GetMapping("/opa") fun opa() = "opa"
+  @PostMapping("/calendar/events")
+    fun createEvent(
+        @RequestHeader("Authorization") authorization: String,
+        // @RequestBody event: EventItem
+    ): ResponseEntity<EventItem> {
+        val token = authorization.removePrefix("Bearer ").trim()
+        return ResponseEntity.ok(googleOAuthService.createEvent(token))
+    }
 
   @GetMapping("/calendar/events")
   fun listEvents(
