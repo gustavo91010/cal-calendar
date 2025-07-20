@@ -1,12 +1,12 @@
 package com.ajudaqui.CalControl.controller
 
 import com.ajudaqui.CalControl.service.GoogleOAuthService
+import com.ajudaqui.CalControl.dto.CalendarEventsResponse
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -20,18 +20,27 @@ class GoogleOAuthController(private val googleOAuthService: GoogleOAuthService) 
   @GetMapping("/opa") fun opa() = "opa"
 
   @GetMapping("/calendar/events")
-  fun listEvents(@RequestHeader("Authorization") authorization: String): Map<String, Any>? {
+  fun listEvents(
+          @RequestHeader("Authorization") authorization: String,
+          @RequestParam accessToken: String?,
+          @RequestParam(required = false) singleEvents: String?,
+          @RequestParam(required = false) updatedMin: String?,
+          @RequestParam(required = false) updatedMax: String?,
+          @RequestParam(required = false) maxResults: Long?
+  ): CalendarEventsResponse?{
     logger.info("[GET] |/google/calendar/events | ")
     val token = authorization.removePrefix("Bearer ").trim()
-    return googleOAuthService.listEvents(token)
+    val response =
+            googleOAuthService.listEvents(
+                    accessToken = token,
+                    singleEvents = singleEvents,
+                    updatedMin = updatedMin,
+                    updatedMax = updatedMax,
+                    maxResults = maxResults
+            )
+    // print(response?.keys)
+    return response
   }
-
-  // @PostMapping("/calendar/token")
-  // fun exchangeCodeForToken(@RequestParam code: String): Map<String, Any>? {
-  //   logger.info("[POST] |/google/calendar/token | ")
-
-  //   return googleOAuthService.exchangeCodeForToken()
-  // }
 
   // Abre a pagina de autenticação com a uri fornecida
   @GetMapping("/authentication")
@@ -41,7 +50,7 @@ class GoogleOAuthController(private val googleOAuthService: GoogleOAuthService) 
                   HttpStatus.FOUND
           )
 
-          // Se a autenticação der certo, ele chama aqui, já autenticado
+  // Se a autenticação der certo, ele chama aqui, já autenticado
   @GetMapping("/authenticated")
   fun autorizado(@RequestParam code: String): ResponseEntity<Any> =
           ResponseEntity.ok(googleOAuthService.validToken(code))

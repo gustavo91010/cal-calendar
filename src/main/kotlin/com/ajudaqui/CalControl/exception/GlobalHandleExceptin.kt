@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.context.request.WebRequest
 
 @ControllerAdvice
@@ -82,7 +83,8 @@ class GlobalExceptionHandler {
         MessageException::class.java to HttpStatus.UNAUTHORIZED,
         NotFoundException::class.java to HttpStatus.NOT_FOUND,
         NoSuchElementException::class.java to HttpStatus.NOT_FOUND,
-        NotAutorizationException::class.java to HttpStatus.UNAUTHORIZED
+        NotAutorizationException::class.java to HttpStatus.UNAUTHORIZED,
+        Exception::class.java to HttpStatus.BAD_REQUEST
     )
 
 
