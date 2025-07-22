@@ -3,6 +3,7 @@ package com.ajudaqui.CalControl.entity
 import com.ajudaqui.CalControl.dto.EventCreateRequest
 import jakarta.persistence.*
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 
 @Entity(name = "events")
 data class Events(
@@ -20,8 +21,14 @@ data class Events(
     fun form(dto: EventCreateRequest) =
             Events(
                     summary = dto.summary,
-                    start = LocalDateTime.parse(dto.start.dateTime),
-                    end = LocalDateTime.parse(dto.end.dateTime),
+                    start = dto.start.dateTime?.let { OffsetDateTime.parse(it).toLocalDateTime() }
+                                    ?: throw IllegalArgumentException(
+                                            "start.dateTime não pode ser nulo"
+                                    ),
+                    end = dto.end.dateTime?.let { OffsetDateTime.parse(it).toLocalDateTime() }
+                                    ?: throw IllegalArgumentException(
+                                            "end.dateTime não pode ser nulo"
+                                    ),
                     status = "create"
             )
   }

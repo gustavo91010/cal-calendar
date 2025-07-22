@@ -1,6 +1,7 @@
 package com.ajudaqui.CalControl.service
 
 import com.ajudaqui.CalControl.dto.EventCreateDateTime
+import com.ajudaqui.CalControl.dto.EventCreateRequest
 import com.ajudaqui.CalControl.exceprion.custon.MessageException
 import com.ajudaqui.CalControl.response.CalendarEventsResponse
 import com.ajudaqui.CalControl.response.Creator
@@ -8,37 +9,25 @@ import com.ajudaqui.CalControl.response.EventDateTime
 import com.ajudaqui.CalControl.response.EventItem
 import com.ajudaqui.CalControl.response.Organizer
 import com.ajudaqui.CalControl.response.Reminders
-import com.ajudaqui.CalControl.dto.EventCreateRequest
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import java.net.URI
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.*
 import org.springframework.stereotype.Service
-import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
 
 @Service
-class GoogleCalendarService(
-        private val usersService: UsersService,
-        @Value("\${google.client.id}") private val clientId: String,
-        @Value("\${google.client.secret}") private val clientSecret: String,
-        @Value("\${google.redirect.uri}") private val redirectUri: String,
-) {
+class GoogleCalendarService() {
 
   fun createEvent(
           accessToken: String,
-          calendarId: String = "primary"
-          // event: EventItem= factorEvent()
+          calendarId: String? = "primary",
+          event: EventCreateRequest?
           ): EventItem? {
-    val event = factoryEvemtRequest()
-    print(event)
     val url = "https://www.googleapis.com/calendar/v3/calendars/$calendarId/events"
-
+println( "Objero no ggoogle calendar")
+println(event)
     val headers =
             HttpHeaders().apply {
               contentType = MediaType.APPLICATION_JSON
@@ -53,26 +42,7 @@ class GoogleCalendarService(
     } catch (e: HttpClientErrorException) {
       e.printStackTrace()
       throw MessageException(handlerErrorGoogle(e))
-      //      throw e
     }
-  }
-
-  fun exchangeCodeForToken(code: String): Map<String, Any>? {
-    val url = "https://oauth2.googleapis.com/token"
-    val body =
-            LinkedMultiValueMap<String, String>().apply {
-              add("code", code)
-              add("client_id", clientId)
-              add("client_secret", clientSecret)
-              add("redirect_uri", redirectUri)
-              add("grant_type", "authorization_code")
-            }
-    val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_FORM_URLENCODED }
-    val entity = HttpEntity(body, headers)
-    val restTemplate = RestTemplate()
-    val response = restTemplate.exchange(url, HttpMethod.POST, entity, Map::class.java)
-
-    return response.body as? Map<String, Any>
   }
 
   fun listEvents(
@@ -125,30 +95,12 @@ class GoogleCalendarService(
     return googleError ?: "Problema na comunicação com a APi da Google"
   }
 
-  fun authorizedUri(): URI? {
-    val permissionCalendar = "https://www.googleapis.com/auth/calendar"
-    val permissionEmail = "https://www.googleapis.com/auth/userinfo.email"
-    val urlScope = "$permissionCalendar $permissionEmail"
-    val uriGoogleAuth = "https://accounts.google.com/o/oauth2/v2/auth"
-    val params = "?client_id=$clientId&redirect_uri=$redirectUri"
-    val scopeEncode = URLEncoder.encode(urlScope, StandardCharsets.UTF_8.toString())
-    val scope = "&scope=$scopeEncode"
-    val responseType = "&response_type=code"
-    val prompt = "&prompt=consent"
-    val accessType = "&access_type=offline"
-    return URI.create(uriGoogleAuth + params + scope + responseType + prompt + accessType)
-  }
-
-  fun validToken(code: String): String {
-    val response = exchangeCodeForToken(code) ?: emptyMap()
-    usersService.attUserByAuthGoogle(response)
-    return "Autenticação conluida"
-  }
-
-  private fun factoryEvemtRequest(): EventCreateRequest= EventCreateRequest(
-    summary = "Reunião de Teste",
-    // description = "Descrição do evento de teste",
-    description = """
+  private fun factoryEvemtRequest(): EventCreateRequest =
+          EventCreateRequest(
+                  summary = "Reunião de Teste",
+                  // description = "Descrição do evento de teste",
+                  description =
+                          """
     Reunião para revisar o projeto.
 
     Agenda:
@@ -157,10 +109,10 @@ class GoogleCalendarService(
 
     Mais informações: https://meusite.com/reuniao
 """.trimIndent(),
-    location = "Recife",
-    start = EventCreateDateTime(dateTime = "2025-08-01T10:00:00-03:00"),
-    end = EventCreateDateTime(dateTime = "2025-08-01T11:00:00-03:00")
-)
+                  location = "Recife",
+                  start = EventCreateDateTime(dateTime = "2025-08-01T10:00:00-03:00"),
+                  end = EventCreateDateTime(dateTime = "2025-08-01T11:00:00-03:00")
+          )
 
   private fun factorEvent(): EventItem =
           EventItem(
