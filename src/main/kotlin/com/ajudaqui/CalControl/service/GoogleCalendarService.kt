@@ -5,8 +5,6 @@ import com.ajudaqui.CalControl.dto.EventCreateDateTime
 import com.ajudaqui.CalControl.dto.EventCreateRequest
 import com.ajudaqui.CalControl.exceprion.custon.MessageException
 import com.ajudaqui.CalControl.response.*
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -17,23 +15,21 @@ import org.springframework.web.client.RestTemplate
 
 @Service
 class GoogleCalendarService() {
-
+  private val url: String = "https://www.googleapis.com/calendar/v3/calendars"
   fun createEvent(
           accessToken: String,
           calendarId: String? = "primary",
           event: EventCreateRequest?
   ): EventItem? {
-    val url = "https://www.googleapis.com/calendar/v3/calendars/$calendarId/events"
-    println("Objero no ggoogle calendar")
-    println(event)
+    val url = "$url/$calendarId/events"
     val headers =
             HttpHeaders().apply {
               contentType = MediaType.APPLICATION_JSON
               setBearerAuth(accessToken)
             }
     return try {
-      val mapper = ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
-      println(mapper.writeValueAsString(event))
+      // val mapper = ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
+      // println(mapper.writeValueAsString(event))
       val response =
               RestTemplate().postForEntity(url, HttpEntity(event, headers), EventItem::class.java)
       response.body
@@ -55,18 +51,13 @@ class GoogleCalendarService() {
     val startOfDay = now.atStartOfDay().atOffset(ZoneOffset.UTC).format(formatter)
     val endOfDay = now.atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC).format(formatter)
 
-    val minOrNo =
-            if (updatedMin != null) "&timeMin=$updatedMin"
-            else "&timeMin=$startOfDay"
-    val maxOrNo =
-            if (updatedMax != null) "&timeMax=$updatedMax"
-            else "&timeMax=$endOfDay"
+    val minOrNo = if (updatedMin != null) "&timeMin=$updatedMin" else "&timeMin=$startOfDay"
+    val maxOrNo = if (updatedMax != null) "&timeMax=$updatedMax" else "&timeMax=$endOfDay"
     val resultOrNo = if (maxResults != null) "&maxResults=$maxResults" else "&maxResults=100"
     val eventOrNo =
             if (singleEvents != null) "&singleEvents=$singleEvents" else "&singleEvents=false"
 
-    val url =
-            "https://www.googleapis.com/calendar/v3/calendars/primary/events?$eventOrNo$minOrNo$maxOrNo$resultOrNo&showDeleted=false"
+    val url = "$url/primary/events?$eventOrNo$minOrNo$maxOrNo$resultOrNo&showDeleted=false"
 
     val headers =
             HttpHeaders().apply {
@@ -83,19 +74,58 @@ class GoogleCalendarService() {
       response.body
     } catch (e: HttpClientErrorException.Unauthorized) {
       throw MessageException(handlerErrorGoogle(e))
+    } catch (e: HttpClientErrorException.Gone) {
+      throw MessageException(handlerErrorGoogle(e))
+    }
+  }
+
+  fun getEventById(accessToken: String, eventId: String): EventItem? {
+    val url = "$url/primary/events/$eventId"
+    val headers =
+            HttpHeaders().apply {
+              contentType = MediaType.APPLICATION_JSON
+              setBearerAuth(accessToken)
+            }
+    val entity = HttpEntity<String>(headers)
+
+    return try {
+      RestTemplate().exchange(url, HttpMethod.GET, entity, EventItem::class.java).body
+    } catch (e: HttpClientErrorException) {
+      throw MessageException(handlerErrorGoogle(e))
+    }
+  }
+
+  fun deleteEvent(accessToken: String, eventId: String) {
+    val url = "$url/primary/events/$eventId"
+    val headers =
+            HttpHeaders().apply {
+              contentType = MediaType.APPLICATION_JSON
+              setBearerAuth(accessToken)
+            }
+    val entity = HttpEntity<String>(headers)
+    try {
+      RestTemplate().exchange(url, HttpMethod.DELETE, entity, Void::class.java)
+    } catch (e: HttpClientErrorException) {
+      throw MessageException(handlerErrorGoogle(e))
     }
   }
 
   private fun handlerErrorGoogle(e: HttpClientErrorException): String {
-    val body = e.responseBodyAsString
-    val mapper = jacksonObjectMapper()
-    val googleError =
-            try {
-              mapper.readTree(body).path("error").path("message").asText()
-            } catch (_: Exception) {
-              null
-            }
-    return googleError ?: "Problema na comunicação com a APi da Google"
+    val status = e.statusCode
+
+    return try {
+      val node = jacksonObjectMapper().readTree(e.responseBodyAsString).path("error")
+      val detail =
+              node.path("errors").get(0)?.path("message")?.asText() ?: node.path("message").asText()
+
+      when (status) {
+        HttpStatus.UNAUTHORIZED -> "Não autorizado: $detail"
+        HttpStatus.GONE -> "Recurso já removido: $detail"
+        else -> "Erro Google ($status): $detail"
+      }
+    } catch (_: Exception) {
+       "Problema na comunicação com a API da Google"
+    }
   }
 
   private fun factoryEvemtRequest(): EventCreateRequest =
