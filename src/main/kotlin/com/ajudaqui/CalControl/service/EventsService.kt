@@ -15,14 +15,8 @@ class EventsService(
 
   fun create(email: String, eventCreate: EventCreateRequest): Events {
     var users = usersService.findByEmail(email)
-    val eventItem = calensarService.createEvent(users.accessToken!!, "primary", eventCreate)
-    println(eventItem)
-    if (eventItem == null) {
-      throw NotFoundException("deu erradao!")
-    }
-      print("chegoua qui foi???")
-      print("chegoua qui foi???")
-      print("chegoua qui foi???")
+    val eventItem = calensarService.createEvent(users.accessToken ?: "", "primary", eventCreate)
+    if (eventItem == null) throw NotFoundException("deu erradao!")
     return repository.save(
             Events.form(eventCreate).apply {
               this.users = users

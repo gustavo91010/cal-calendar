@@ -56,32 +56,31 @@ class GoogleOAuthService(
     return "Autenticação conluida"
   }
 
-  fun refreshAccessToken(refreshToken: String): GoogleTokenResponse {
-    val url = "https://oauth2.googleapis.com/token"
+  fun refreshAccessTokenByHttp(email: String) {
+    var user = usersService.findByEmail(email)
+    val refresh = refreshAccessToken(user.refreshToken ?: "")
+    user.accessToken = refresh.access_token
+    user.refreshTokenExpiresIn = refresh.expires_in
 
+    usersService.save(user)
+  }
+  fun refreshAccessToken(refreshToken: String): GoogleTokenResponse {
     val headers = HttpHeaders()
     headers.contentType = MediaType.APPLICATION_FORM_URLENCODED
 
-    val body = LinkedMultiValueMap<String, String>().apply {
-        add("client_id", "SEU_CLIENT_ID")
-        add("client_secret", "SEU_CLIENT_SECRET")
-        add("refresh_token", refreshToken)
-        add("grant_type", "refresh_token")
-    }
+    val body =
+            LinkedMultiValueMap<String, String>().apply {
+              add("client_id", clientId)
+              add("client_secret", clientSecret)
+              add("refresh_token", refreshToken)
+              add("grant_type", "refresh_token")
+            }
 
-    val request = HttpEntity(body, headers)
-
-    val response = RestTemplate().postForEntity(
-        url,
-        request,
-        GoogleTokenResponse::class.java
-    )
+    val url = "https://oauth2.googleapis.com/token"
+    val response =
+            RestTemplate()
+                    .postForEntity(url, HttpEntity(body, headers), GoogleTokenResponse::class.java)
 
     return response.body ?: throw RuntimeException("Erro ao renovar token")
+  }
 }
-}
-//POST https://oauth2.googleapis.com/token
-//client_id=SEU_CLIENT_ID
-//client_secret=SEU_CLIENT_SECRET
-//refresh_token=SEU_REFRESH_TOKEN
-//grant_type=refresh_token

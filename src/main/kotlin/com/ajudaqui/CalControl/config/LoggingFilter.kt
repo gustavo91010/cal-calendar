@@ -20,7 +20,6 @@ class LoggingFilter : OncePerRequestFilter() {
         val method = request.method
         val uri = request.requestURI
         val ip = request.remoteAddr
-//        request.parameterMap.forEach { (k,v)-> println("$k = ${v.joinToString()}") }
         logger.info("$ip | [$method] | $uri")
         filterChain.doFilter(request, response)    }
 }

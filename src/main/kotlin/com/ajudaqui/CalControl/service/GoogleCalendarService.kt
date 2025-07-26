@@ -40,7 +40,7 @@ println(event)
               RestTemplate().postForEntity(url, HttpEntity(event, headers), EventItem::class.java)
       response.body
     } catch (e: HttpClientErrorException) {
-      e.printStackTrace()
+      // e.printStackTrace()
       throw MessageException(handlerErrorGoogle(e))
     }
   }
