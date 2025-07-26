@@ -1,17 +1,15 @@
 package com.ajudaqui.CalControl.service
 
+// import org.springframework.format.annotation.DateTimeFormat
 import com.ajudaqui.CalControl.dto.EventCreateDateTime
 import com.ajudaqui.CalControl.dto.EventCreateRequest
 import com.ajudaqui.CalControl.exceprion.custon.MessageException
-import com.ajudaqui.CalControl.response.CalendarEventsResponse
-import com.ajudaqui.CalControl.response.Creator
-import com.ajudaqui.CalControl.response.EventDateTime
-import com.ajudaqui.CalControl.response.EventItem
-import com.ajudaqui.CalControl.response.Organizer
-import com.ajudaqui.CalControl.response.Reminders
+import com.ajudaqui.CalControl.response.*
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import java.time.*
+import java.time.format.DateTimeFormatter
 import org.springframework.http.*
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
@@ -24,10 +22,10 @@ class GoogleCalendarService() {
           accessToken: String,
           calendarId: String? = "primary",
           event: EventCreateRequest?
-          ): EventItem? {
+  ): EventItem? {
     val url = "https://www.googleapis.com/calendar/v3/calendars/$calendarId/events"
-println( "Objero no ggoogle calendar")
-println(event)
+    println("Objero no ggoogle calendar")
+    println(event)
     val headers =
             HttpHeaders().apply {
               contentType = MediaType.APPLICATION_JSON
@@ -52,13 +50,18 @@ println(event)
           updatedMax: String?,
           maxResults: Long?
   ): CalendarEventsResponse? {
+    val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+    val now = LocalDate.now(ZoneOffset.UTC)
+    val startOfDay = now.atStartOfDay().atOffset(ZoneOffset.UTC).format(formatter)
+    val endOfDay = now.atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC).format(formatter)
+
     val minOrNo =
-            if (updatedMin != null) "&updatedMin=$updatedMin"
-            else "&updatedMin=2025-01-01T00:00:00Z"
+            if (updatedMin != null) "&timeMin=$updatedMin"
+            else "&timeMin=$startOfDay"
     val maxOrNo =
-            if (updatedMax != null) "&updatedMax=$updatedMax"
-            else "&updatedMax=2025-11-01T00:00:00Z"
-    val resultOrNo = if (maxResults != null) "&maxResults=$maxResults" else "&maxResults=10"
+            if (updatedMax != null) "&timeMax=$updatedMax"
+            else "&timeMax=$endOfDay"
+    val resultOrNo = if (maxResults != null) "&maxResults=$maxResults" else "&maxResults=100"
     val eventOrNo =
             if (singleEvents != null) "&singleEvents=$singleEvents" else "&singleEvents=false"
 

@@ -29,8 +29,10 @@ class GoogleOAuthController(private val googleOAuthService: GoogleOAuthService) 
           ResponseEntity.ok(googleOAuthService.validToken(code))
 
   @PostMapping("refresh")
-  fun refreshToken(@RequestHeader("Authorization") email: String): ResponseEntity<String> {
-    googleOAuthService.refreshAccessTokenByHttp(email)
-    return ResponseEntity.ok("Access token atualizado com sucesso!")
-  }
+  fun refreshToken(
+          @RequestHeader("Authorization") email: String
+  ): ResponseEntity<Map<String, String>> =
+          ResponseEntity.ok(googleOAuthService.refreshAccessTokenByHttp(email))
+  // return ResponseEntity.ok("Access token atualizado com sucesso!")
+  // }
 }

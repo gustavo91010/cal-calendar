@@ -56,14 +56,16 @@ class GoogleOAuthService(
     return "Autenticação conluida"
   }
 
-  fun refreshAccessTokenByHttp(email: String) {
+  fun refreshAccessTokenByHttp(email: String): Map<String, String> {
     var user = usersService.findByEmail(email)
     val refresh = refreshAccessToken(user.refreshToken ?: "")
     user.accessToken = refresh.access_token
     user.refreshTokenExpiresIn = refresh.expires_in
-
     usersService.save(user)
+    // return "accessToken: ${user.accessToken}"
+    return mapOf("accessToken" to user.accessToken!!)
   }
+
   fun refreshAccessToken(refreshToken: String): GoogleTokenResponse {
     val headers = HttpHeaders()
     headers.contentType = MediaType.APPLICATION_FORM_URLENCODED

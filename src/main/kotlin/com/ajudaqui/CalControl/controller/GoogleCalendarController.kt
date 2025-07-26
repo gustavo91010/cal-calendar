@@ -1,11 +1,10 @@
 package com.ajudaqui.CalControl.controller
 
 import com.ajudaqui.CalControl.dto.EventCreateRequest
-import com.ajudaqui.CalControl.response.CalendarEventsResponse
+import com.ajudaqui.CalControl.mapper.EventCalendarMapper
 import com.ajudaqui.CalControl.response.EventItem
-import com.ajudaqui.CalControl.service.GoogleOAuthService
 import com.ajudaqui.CalControl.service.GoogleCalendarService
-import org.slf4j.LoggerFactory
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import jakarta.validation.Valid
 
 @RestController
 @RequestMapping("/google/calendar")
@@ -22,12 +20,11 @@ class GoogleCalendarController(private val googleOAuthService: GoogleCalendarSer
 
   @PostMapping("/events")
   fun createEvent(
-      @RequestHeader("Authorization") authorization: String,
-       @RequestBody @Valid event: EventCreateRequest
+          @RequestHeader("Authorization") authorization: String,
+          @RequestBody @Valid event: EventCreateRequest
   ): ResponseEntity<EventItem> {
-      val token = authorization.removePrefix("Bearer ").trim()
-      return ResponseEntity.ok(googleOAuthService.
-      createEvent(token,"primary",event))
+    val token = authorization.removePrefix("Bearer ").trim()
+    return ResponseEntity.ok(googleOAuthService.createEvent(token, "primary", event))
   }
 
   @GetMapping("/events")
@@ -37,7 +34,8 @@ class GoogleCalendarController(private val googleOAuthService: GoogleCalendarSer
           @RequestParam(required = false) updatedMin: String?,
           @RequestParam(required = false) updatedMax: String?,
           @RequestParam(required = false) maxResults: Long?
-  ): CalendarEventsResponse? {
+          // ): CalendarEventsResponse? {
+          ): Any? {
     val token = authorization.removePrefix("Bearer ").trim()
     val response =
             googleOAuthService.listEvents(
@@ -47,6 +45,6 @@ class GoogleCalendarController(private val googleOAuthService: GoogleCalendarSer
                     updatedMax = updatedMax,
                     maxResults = maxResults
             )
-    return response
+    return EventCalendarMapper.mapCalendarResponse(response!!)
   }
 }
