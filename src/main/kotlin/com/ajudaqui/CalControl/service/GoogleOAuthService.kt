@@ -1,9 +1,11 @@
 package com.ajudaqui.CalControl.service
 
+import com.ajudaqui.CalControl.entity.Users
 import com.ajudaqui.CalControl.response.GoogleTokenResponse
 import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.time.LocalDateTime
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.*
 import org.springframework.stereotype.Service
@@ -56,17 +58,21 @@ class GoogleOAuthService(
     return "Autenticação conluida"
   }
 
-  fun refreshAccessTokenByHttp(email: String): Map<String, String> {
-    var user = usersService.findByEmail(email)
+  fun refreshAccessTokenByAccessToken(accessToken: String): Map<String, String> =
+          mapOf("accessToken" to refreshTokeyByUser(usersService.findByAccessToken(accessToken)))
+
+  fun refreshAccessTokenByHttp(email: String): Map<String, String> =
+          mapOf("accessToken" to refreshTokeyByUser(usersService.findByEmail(email)))
+
+  fun refreshTokeyByUser(user: Users): String {
     val refresh = refreshAccessToken(user.refreshToken ?: "")
     user.accessToken = refresh.access_token
     user.refreshTokenExpiresIn = refresh.expires_in
     usersService.save(user)
-    // return "accessToken: ${user.accessToken}"
-    return mapOf("accessToken" to user.accessToken!!)
+    return user.accessToken!!
   }
 
-  fun refreshAccessToken(refreshToken: String): GoogleTokenResponse {
+  private fun refreshAccessToken(refreshToken: String): GoogleTokenResponse {
     val headers = HttpHeaders()
     headers.contentType = MediaType.APPLICATION_FORM_URLENCODED
 
@@ -85,4 +91,16 @@ class GoogleOAuthService(
 
     return response.body ?: throw RuntimeException("Erro ao renovar token")
   }
+
+  fun checkingValidAccessToken(accessToken: String): String {
+    val user = usersService.findByAccessToken(accessToken)
+    return user
+            .takeIf {
+              val expirationTime = it.updatedAt.plusSeconds(it.refreshTokenExpiresIn ?: 0)
+              expirationTime.isAfter(LocalDateTime.now())
+            }
+            ?.accessToken
+            ?: refreshTokeyByUser(user)
+  }
+
 }

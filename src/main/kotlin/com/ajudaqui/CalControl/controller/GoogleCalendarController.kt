@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Profile
 
 @RestController
 @RequestMapping("/google/calendar")
-@Profile("desabilitado")
+// @Profile("desabilitado")
 class GoogleCalendarController(private val googleCalendarService: GoogleCalendarService) {
 
   @PostMapping("/events")

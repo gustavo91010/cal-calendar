@@ -24,6 +24,11 @@ class UsersService(
 
   fun findAll() = userRepository.findAll()
 
+  fun findByAccessToken(accessToken: String): Users =
+          userRepository.findByAccessToken(accessToken).orElseThrow {
+            NotFoundException("Usuário não encontrado")
+          }
+
   fun findByEmail(email: String): Users =
           userRepository.findByEmail(email).orElseThrow {
             NotFoundException("Usuário não encontrado")

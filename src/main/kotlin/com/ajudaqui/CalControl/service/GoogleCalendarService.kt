@@ -16,7 +16,7 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
 
 @Service
-class GoogleCalendarService() {
+class GoogleCalendarService(val authGoogle: GoogleOAuthService) {
   private val url: String = "https://www.googleapis.com/calendar/v3/calendars"
   fun createEvent(
           accessToken: String,
@@ -24,10 +24,11 @@ class GoogleCalendarService() {
           event: EventCreateRequest?
   ): EventItem? {
     val url = "$url/$calendarId/events"
+    val validAccessToken = authGoogle.checkingValidAccessToken(accessToken)
     val headers =
             HttpHeaders().apply {
               contentType = MediaType.APPLICATION_JSON
-              setBearerAuth(accessToken)
+              setBearerAuth(validAccessToken)
             }
     return try {
       RestTemplate().postForEntity(url, HttpEntity(event, headers), EventItem::class.java).body
@@ -52,13 +53,12 @@ class GoogleCalendarService() {
     val resultOrNo = if (maxResults != null) "&maxResults=$maxResults" else "&maxResults=100"
     val eventOrNo =
             if (singleEvents != null) "&singleEvents=$singleEvents" else "&singleEvents=false"
-
+    val validAccessToken = authGoogle.checkingValidAccessToken(accessToken)
     val url = "$url/primary/events?$eventOrNo$minOrNo$maxOrNo$resultOrNo&showDeleted=false"
-    println(url)
     val headers =
             HttpHeaders().apply {
               contentType = MediaType.APPLICATION_JSON
-              setBearerAuth(accessToken)
+              setBearerAuth(validAccessToken)
             }
 
     val entity = HttpEntity<String>(headers)
@@ -74,10 +74,11 @@ class GoogleCalendarService() {
 
   fun getEventById(accessToken: String, eventId: String): EventItem? {
     val url = "$url/primary/events/$eventId"
+    val validAccessToken = authGoogle.checkingValidAccessToken(accessToken)
     val headers =
             HttpHeaders().apply {
               contentType = MediaType.APPLICATION_JSON
-              setBearerAuth(accessToken)
+              setBearerAuth(validAccessToken)
             }
     val entity = HttpEntity<String>(headers)
     return try {
@@ -93,10 +94,11 @@ class GoogleCalendarService() {
           calendarId: String = "primary"
   ): MutableMap<String, Any>? {
     val endpoint = "${this.url}/$calendarId/events/$eventId"
+    val validAccessToken = authGoogle.checkingValidAccessToken(accessToken)
     val headers =
             HttpHeaders().apply {
               contentType = MediaType.APPLICATION_JSON
-              setBearerAuth(accessToken)
+              setBearerAuth(validAccessToken)
             }
     val entity = HttpEntity<String>(headers)
     val restTemplate = RestTemplate()
@@ -119,7 +121,9 @@ class GoogleCalendarService() {
           eventItemDtop: EventItemUpdateDto,
           calendarId: String = "primary"
   ): EventItem? {
-    val currentEvent = getEventByIdAsMap(accessToken, eventId)
+    val validAccessToken = authGoogle.checkingValidAccessToken(accessToken)
+
+    val currentEvent = getEventByIdAsMap(validAccessToken, eventId)
     if (currentEvent != null) {
       currentEvent["description"] = eventItemDtop.description
     }
@@ -127,23 +131,24 @@ class GoogleCalendarService() {
     val headers =
             HttpHeaders().apply {
               contentType = MediaType.APPLICATION_JSON
-              setBearerAuth(accessToken)
+              setBearerAuth(validAccessToken)
             }
     val entity = HttpEntity(currentEvent, headers)
     return try {
       RestTemplate().exchange(url, HttpMethod.PUT, entity, EventItem::class.java).body
     } catch (e: HttpClientErrorException) {
-      e.printStackTrace()
       throw MessageException(handlerErrorGoogle(e))
     }
   }
 
   fun deleteEvent(accessToken: String, eventId: String) {
     val url = "$url/primary/events/$eventId"
+    val validAccessToken = authGoogle.checkingValidAccessToken(accessToken)
+
     val headers =
             HttpHeaders().apply {
               contentType = MediaType.APPLICATION_JSON
-              setBearerAuth(accessToken)
+              setBearerAuth(validAccessToken)
             }
     val entity = HttpEntity<String>(headers)
     try {
