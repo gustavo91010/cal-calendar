@@ -9,9 +9,11 @@ import com.ajudaqui.CalControl.service.GoogleCalendarService
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.context.annotation.Profile
 
 @RestController
 @RequestMapping("/google/calendar")
+@Profile("desabilitado")
 class GoogleCalendarController(private val googleCalendarService: GoogleCalendarService) {
 
   @PostMapping("/events")
@@ -62,8 +64,6 @@ class GoogleCalendarController(private val googleCalendarService: GoogleCalendar
   ): ResponseEntity<Any> {
     val token = authorization.removePrefix("Bearer ").trim()
     val event = googleCalendarService.updateEventDescriptin(token, eventId, eventItemDto)
-    // return ResponseEntity.ok(
-    //         googleCalendarService.updateEventDescriptin(token, eventId, eventItemDto)
     return ResponseEntity.ok(EventItemMapper.mapperResponse(event!!))
   }
 
