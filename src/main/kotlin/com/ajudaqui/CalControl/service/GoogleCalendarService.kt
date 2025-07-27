@@ -3,11 +3,13 @@ package com.ajudaqui.CalControl.service
 // import org.springframework.format.annotation.DateTimeFormat
 import com.ajudaqui.CalControl.dto.EventCreateDateTime
 import com.ajudaqui.CalControl.dto.EventCreateRequest
+import com.ajudaqui.CalControl.dto.EventItemUpdateDto
 import com.ajudaqui.CalControl.exceprion.custon.MessageException
 import com.ajudaqui.CalControl.response.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.time.*
 import java.time.format.DateTimeFormatter
+import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.*
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
@@ -28,13 +30,8 @@ class GoogleCalendarService() {
               setBearerAuth(accessToken)
             }
     return try {
-      // val mapper = ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
-      // println(mapper.writeValueAsString(event))
-      val response =
-              RestTemplate().postForEntity(url, HttpEntity(event, headers), EventItem::class.java)
-      response.body
+      RestTemplate().postForEntity(url, HttpEntity(event, headers), EventItem::class.java).body
     } catch (e: HttpClientErrorException) {
-      // e.printStackTrace()
       throw MessageException(handlerErrorGoogle(e))
     }
   }
@@ -42,17 +39,16 @@ class GoogleCalendarService() {
   fun listEvents(
           accessToken: String,
           singleEvents: String?,
-          updatedMin: String?,
-          updatedMax: String?,
+          timeMin: String?,
+          timeMax: String?,
           maxResults: Long?
   ): CalendarEventsResponse? {
     val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
-    val now = LocalDate.now(ZoneOffset.UTC)
-    val startOfDay = now.atStartOfDay().atOffset(ZoneOffset.UTC).format(formatter)
-    val endOfDay = now.atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC).format(formatter)
+    val startOfDay = LocalDate.now().atStartOfDay().atOffset(ZoneOffset.UTC).format(formatter)
+    val endOfDay = LocalDate.now().atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC).format(formatter)
 
-    val minOrNo = if (updatedMin != null) "&timeMin=$updatedMin" else "&timeMin=$startOfDay"
-    val maxOrNo = if (updatedMax != null) "&timeMax=$updatedMax" else "&timeMax=$endOfDay"
+    val minOrNo = if (timeMin != null) "&timeMin=$timeMin" else "&timeMin=$startOfDay"
+    val maxOrNo = if (timeMax != null) "&timeMax=$timeMax" else "&timeMax=$endOfDay"
     val resultOrNo = if (maxResults != null) "&maxResults=$maxResults" else "&maxResults=100"
     val eventOrNo =
             if (singleEvents != null) "&singleEvents=$singleEvents" else "&singleEvents=false"
@@ -67,11 +63,8 @@ class GoogleCalendarService() {
 
     val entity = HttpEntity<String>(headers)
     val restTemplate = RestTemplate()
-
     return try {
-      val response =
-              restTemplate.exchange(url, HttpMethod.GET, entity, CalendarEventsResponse::class.java)
-      response.body
+      restTemplate.exchange(url, HttpMethod.GET, entity, CalendarEventsResponse::class.java).body
     } catch (e: HttpClientErrorException.Unauthorized) {
       throw MessageException(handlerErrorGoogle(e))
     } catch (e: HttpClientErrorException.Gone) {
@@ -87,10 +80,60 @@ class GoogleCalendarService() {
               setBearerAuth(accessToken)
             }
     val entity = HttpEntity<String>(headers)
-
     return try {
       RestTemplate().exchange(url, HttpMethod.GET, entity, EventItem::class.java).body
     } catch (e: HttpClientErrorException) {
+      throw MessageException(handlerErrorGoogle(e))
+    }
+  }
+
+  private fun getEventByIdAsMap(
+          accessToken: String,
+          eventId: String,
+          calendarId: String = "primary"
+  ): MutableMap<String, Any>? {
+    val endpoint = "${this.url}/$calendarId/events/$eventId"
+    val headers =
+            HttpHeaders().apply {
+              contentType = MediaType.APPLICATION_JSON
+              setBearerAuth(accessToken)
+            }
+    val entity = HttpEntity<String>(headers)
+    val restTemplate = RestTemplate()
+    return try {
+      restTemplate.exchange(
+                      endpoint,
+                      HttpMethod.GET,
+                      entity,
+                      object : ParameterizedTypeReference<MutableMap<String, Any>>() {}
+              )
+              .body
+    } catch (e: HttpClientErrorException) {
+      throw MessageException(handlerErrorGoogle(e))
+    }
+  }
+
+  fun updateEventDescriptin(
+          accessToken: String,
+          eventId: String,
+          eventItemDtop: EventItemUpdateDto,
+          calendarId: String = "primary"
+  ): EventItem? {
+    val currentEvent = getEventByIdAsMap(accessToken, eventId)
+    if (currentEvent != null) {
+      currentEvent["description"] = eventItemDtop.description
+    }
+    val url = "$url/$calendarId/events/$eventId"
+    val headers =
+            HttpHeaders().apply {
+              contentType = MediaType.APPLICATION_JSON
+              setBearerAuth(accessToken)
+            }
+    val entity = HttpEntity(currentEvent, headers)
+    return try {
+      RestTemplate().exchange(url, HttpMethod.PUT, entity, EventItem::class.java).body
+    } catch (e: HttpClientErrorException) {
+      e.printStackTrace()
       throw MessageException(handlerErrorGoogle(e))
     }
   }
@@ -112,19 +155,17 @@ class GoogleCalendarService() {
 
   private fun handlerErrorGoogle(e: HttpClientErrorException): String {
     val status = e.statusCode
-
     return try {
       val node = jacksonObjectMapper().readTree(e.responseBodyAsString).path("error")
       val detail =
               node.path("errors").get(0)?.path("message")?.asText() ?: node.path("message").asText()
-
       when (status) {
         HttpStatus.UNAUTHORIZED -> "Não autorizado: $detail"
         HttpStatus.GONE -> "Recurso já removido: $detail"
         else -> "Erro Google ($status): $detail"
       }
     } catch (_: Exception) {
-       "Problema na comunicação com a API da Google"
+      "Problema na comunicação com a API da Google"
     }
   }
 

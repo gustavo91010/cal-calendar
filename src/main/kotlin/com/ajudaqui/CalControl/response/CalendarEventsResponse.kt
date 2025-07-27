@@ -27,17 +27,17 @@ data class EventItem(
     val kind: String? = null,
     val etag: String? = null,
     val id: String? = null,
-    val status: String? = null,
+    var status: String? = null,
     val htmlLink: String? = null,
     val created: String? = null,
-    val updated: String? = null,
-    val summary: String? = null,
-    val description: String? = null,
+    var updated: String? = null,
+    var summary: String? = null,
+    var description: String? = null,
     val location: String? = null,
     val creator: Creator? = null,
     val organizer: Organizer? = null,
-    val start: EventDateTime? = null,
-    val end: EventDateTime? = null,
+    var start: EventDateTime? = null,
+    var end: EventDateTime? = null,
     val transparency: String? = null,
     val visibility: String? = null,
     val iCalUID: String? = null,
@@ -65,7 +65,7 @@ data class Organizer(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class EventDateTime(
     val date: String? = null,
-    val dateTime: String? = null,
+    var dateTime: String? = null,
     val timeZone: String? = null
 )
 
@@ -74,7 +74,7 @@ data class Attendee(
     val email: String? = null,
     val organizer: Boolean? = null,
     val self: Boolean? = null,
-    val responseStatus: String? = null
+    var responseStatus: String? = null
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -86,5 +86,5 @@ data class Reminders(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Source(
     val url: String? = null,
-    val title: String? = null
+    var title: String? = null
 )
