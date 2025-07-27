@@ -6,7 +6,8 @@ import jakarta.validation.constraints.*
 data class EventCreateRequest(
     @field:NotBlank(message = "Resumo é obrigatório")
     val summary: String,
-    val description: String? = null,
+    @field:NotBlank(message = "Descrição é obrigatório")
+    val description: String,
     val location: String? = null,
     @field:NotNull(message = "O periodo de inicio do evento  é obrigatório")
     val start: EventCreateDateTime,

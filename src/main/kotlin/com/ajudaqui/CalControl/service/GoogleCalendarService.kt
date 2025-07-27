@@ -54,7 +54,7 @@ class GoogleCalendarService() {
             if (singleEvents != null) "&singleEvents=$singleEvents" else "&singleEvents=false"
 
     val url = "$url/primary/events?$eventOrNo$minOrNo$maxOrNo$resultOrNo&showDeleted=false"
-
+    println(url)
     val headers =
             HttpHeaders().apply {
               contentType = MediaType.APPLICATION_JSON
