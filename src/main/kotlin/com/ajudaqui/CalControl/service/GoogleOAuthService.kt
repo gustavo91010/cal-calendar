@@ -60,9 +60,6 @@ class GoogleOAuthService(
     return "Autenticação conluida"
   }
 
-  // fun refreshAccessTokenByAccessToken(accessToken: String): Map<String, String> =
-  //         mapOf("accessToken" to refreshTokeyByUser(usersService.findByAccessToken(accessToken)))
-
   fun refreshAccessTokenByHttp(email: String): Map<String, String> =
           mapOf("accessToken" to refreshTokeyByUser(usersService.findByEmail(email)))
 
@@ -103,7 +100,10 @@ class GoogleOAuthService(
             }
             ?.accessToken
             ?: refreshTokeyByUser(user).also {
-              logger.info("AccessToken para email: ${user.email} foi atualizado")
+              val tokenValited = user.updatedAt.plusSeconds(user.refreshTokenExpiresIn ?: 0)
+              logger.info(
+                      "Token expirado, gerando novo para ${user.email}. Validade até: ${tokenValited}"
+              )
             }
   }
 }

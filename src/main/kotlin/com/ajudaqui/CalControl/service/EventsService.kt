@@ -44,7 +44,7 @@ class EventsService(
     return itensGoogle.filter { idEventIdDb.contains(it.id) }
   }
 
-  fun findById(email: String, eventId: Long): EventItem {
+  fun findById(email: String, eventId: Long): Events {
     val accessToken = usersService.findByEmail(email).accessToken!!
     val event =
             repository.findById(eventId).orElseThrow { NotFoundException("Evento não localizado") }
@@ -54,15 +54,14 @@ class EventsService(
             calendarService.getEventById(accessToken, event.eventId!!)
                     ?: throw NotFoundException("ta la no google nÃo")
     validAttEvent(googleEvent, event)
-    save(EventsMapper.fromEventItem(event.id!!, googleEvent))
-    return googleEvent
+    return save(EventsMapper.fromEventItem(event.id!!,event.users!!, googleEvent))
   }
 
   fun update(
           email: String,
           eventId: Long,
           eventItemDtop: EventItemUpdateDto,
-  ): EventItem? {
+  ): Events {
     val accessToken =
             usersService.findByEmail(email).accessToken
                     ?: throw NotAutorizationException("AccessToken não localizad")
@@ -70,8 +69,9 @@ class EventsService(
             repository.findById(eventId).orElseThrow { NotFoundException("Evento não localizado") }
     event.takeIf { it.users?.email == email }
             ?: throw NotAutorizationException("Solicitação não permitida")
-    return calendarService.updateEventDescriptin(accessToken, event.eventId!!, eventItemDtop)
-            ?.also { save(EventsMapper.fromEventItem(event.id!!, it)) }
+    val itemCalendar =
+            calendarService.updateEventDescriptin(accessToken, event.eventId!!, eventItemDtop)
+    return save(EventsMapper.fromEventItem(event.id!!,event.users!!, itemCalendar!!))
   }
 
   fun delete(email: String, eventId: Long) {
@@ -88,7 +88,7 @@ class EventsService(
   private fun validAttEvent(googleEvent: EventItem, event: Events) {
     val updateGogle = parseToLocalDateTime(googleEvent.updated)
     if (updateGogle.isAfter(event.updatedAt))
-            save(EventsMapper.fromEventItem(event.id!!, googleEvent))
+            save(EventsMapper.fromEventItem(event.id!!,event.users!!, googleEvent))
   }
 
   private fun save(event: Events): Events =

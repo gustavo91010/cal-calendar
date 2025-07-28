@@ -123,10 +123,14 @@ class GoogleCalendarService(val authGoogle: GoogleOAuthService) {
   ): EventItem? {
     val validAccessToken = authGoogle.checkingValidAccessToken(accessToken)
 
-    val currentEvent = getEventByIdAsMap(validAccessToken, eventId)
-    if (currentEvent != null) {
-      currentEvent["description"] = eventItemDtop.description
-    }
+    val currentEvent = getEventByIdAsMap(validAccessToken, eventId) ?: return null
+    eventItemDtop.description.takeIf { it.isNotBlank() }?.let { currentEvent["description"] = it }
+    eventItemDtop.summary.takeIf { it.isNotBlank() }?.let { currentEvent["summary"] = it }
+
+    // if (currentEvent != null) {
+    //   currentEvent["description"] = eventItemDtop.description
+
+    // }
     val url = "$url/$calendarId/events/$eventId"
     val headers =
             HttpHeaders().apply {
@@ -141,6 +145,9 @@ class GoogleCalendarService(val authGoogle: GoogleOAuthService) {
     }
   }
 
+  private fun updateValue(map: MutableMap<String, String?>, key: String, value: String?) {
+    value?.takeIf { it.isNotBlank() }?.let { map[key] = it }
+  }
   fun deleteEvent(accessToken: String, eventId: String): Boolean {
     val url = "$url/primary/events/$eventId"
     val validAccessToken = authGoogle.checkingValidAccessToken(accessToken)
