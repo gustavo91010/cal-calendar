@@ -9,19 +9,20 @@ import com.ajudaqui.CalControl.service.GoogleCalendarService
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import org.springframework.context.annotation.Profile
 
 @RestController
 @RequestMapping("/google/calendar")
-// @Profile("desabilitado")
 class GoogleCalendarController(private val googleCalendarService: GoogleCalendarService) {
+  companion object {
+    private const val BEARER_PREFIX = "Bearer "
+  }
 
   @PostMapping("/events")
   fun createEvent(
           @RequestHeader("Authorization") authorization: String,
           @RequestBody @Valid eventRequest: EventCreateRequest
   ): ResponseEntity<Any> {
-    val token = authorization.removePrefix("Bearer ").trim()
+    val token = authorization.removePrefix(BEARER_PREFIX).trim()
     val event = googleCalendarService.createEvent(token, "primary", eventRequest)
     return ResponseEntity.ok(EventItemMapper.mapperResponse(event!!))
   }
@@ -34,7 +35,7 @@ class GoogleCalendarController(private val googleCalendarService: GoogleCalendar
           @RequestParam(required = false) timeMax: String?,
           @RequestParam(required = false) maxResults: Long?
   ): Any? {
-    val token = authorization.removePrefix("Bearer ").trim()
+    val token = authorization.removePrefix(BEARER_PREFIX).trim()
     val response =
             googleCalendarService.listEvents(
                     accessToken = token,
@@ -51,7 +52,7 @@ class GoogleCalendarController(private val googleCalendarService: GoogleCalendar
           @RequestHeader("Authorization") authorization: String,
           @PathVariable id: String
   ): ResponseEntity<Any> {
-    val token = authorization.removePrefix("Bearer ").trim()
+    val token = authorization.removePrefix(BEARER_PREFIX).trim()
     val event = googleCalendarService.getEventById(token, id)
     return ResponseEntity.ok(EventItemMapper.mapperResponse(event!!))
   }
@@ -62,7 +63,7 @@ class GoogleCalendarController(private val googleCalendarService: GoogleCalendar
           @PathVariable eventId: String,
           @RequestBody eventItemDto: EventItemUpdateDto
   ): ResponseEntity<Any> {
-    val token = authorization.removePrefix("Bearer ").trim()
+    val token = authorization.removePrefix(BEARER_PREFIX).trim()
     val event = googleCalendarService.updateEventDescriptin(token, eventId, eventItemDto)
     return ResponseEntity.ok(EventItemMapper.mapperResponse(event!!))
   }
@@ -72,7 +73,7 @@ class GoogleCalendarController(private val googleCalendarService: GoogleCalendar
           @RequestHeader("Authorization") authorization: String,
           @PathVariable id: String
   ): ResponseEntity<MessageResponse> {
-    val token = authorization.removePrefix("Bearer ").trim()
+    val token = authorization.removePrefix(BEARER_PREFIX).trim()
     googleCalendarService.deleteEvent(token, id)
     return ResponseEntity.ok(MessageResponse("Evento id: $id excluido com sucesso."))
   }

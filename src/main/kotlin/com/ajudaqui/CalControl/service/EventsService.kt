@@ -20,6 +20,12 @@ class EventsService(
         private val calendarService: GoogleCalendarService,
 ) {
 
+  companion object {
+    private const val USER_NOT_FOUND = ""
+    private const val EVENT_NOT_FOUND = "Evento não localizado"
+    private const val EVENT_NOT_AUTHORIZED = "Solicitação não permitida"
+  }
+
   fun create(email: String, eventCreate: EventCreateRequest): Events {
     var users = usersService.findByEmail(email)
     val eventItem = calendarService.createEvent(users.accessToken ?: "", "primary", eventCreate)
@@ -46,15 +52,14 @@ class EventsService(
 
   fun findById(email: String, eventId: Long): Events {
     val accessToken = usersService.findByEmail(email).accessToken!!
-    val event =
-            repository.findById(eventId).orElseThrow { NotFoundException("Evento não localizado") }
+    val event = repository.findById(eventId).orElseThrow { NotFoundException(EVENT_NOT_FOUND) }
     event.takeIf { it.users?.email == email }
-            ?: throw NotAutorizationException("Solicitação não permitida")
+            ?: throw NotAutorizationException(EVENT_NOT_AUTHORIZED)
     var googleEvent =
             calendarService.getEventById(accessToken, event.eventId!!)
-                    ?: throw NotFoundException("ta la no google nÃo")
+                    ?: throw NotFoundException(EVENT_NOT_FOUND)
     validAttEvent(googleEvent, event)
-    return save(EventsMapper.fromEventItem(event.id!!,event.users!!, googleEvent))
+    return save(EventsMapper.fromEventItem(event.id!!, event.users!!, googleEvent))
   }
 
   fun update(
@@ -64,31 +69,29 @@ class EventsService(
   ): Events {
     val accessToken =
             usersService.findByEmail(email).accessToken
-                    ?: throw NotAutorizationException("AccessToken não localizad")
-    val event =
-            repository.findById(eventId).orElseThrow { NotFoundException("Evento não localizado") }
+                    ?: throw NotAutorizationException(USER_NOT_FOUND)
+    val event = repository.findById(eventId).orElseThrow { NotFoundException(EVENT_NOT_FOUND) }
     event.takeIf { it.users?.email == email }
-            ?: throw NotAutorizationException("Solicitação não permitida")
+            ?: throw NotAutorizationException(EVENT_NOT_AUTHORIZED)
     val itemCalendar =
             calendarService.updateEventDescriptin(accessToken, event.eventId!!, eventItemDtop)
-    return save(EventsMapper.fromEventItem(event.id!!,event.users!!, itemCalendar!!))
+    return save(EventsMapper.fromEventItem(event.id!!, event.users!!, itemCalendar!!))
   }
 
   fun delete(email: String, eventId: Long) {
     val accessToken =
             usersService.findByEmail(email).accessToken
-                    ?: throw NotAutorizationException("AccessToken não localizad")
-    val event =
-            repository.findById(eventId).orElseThrow { NotFoundException("Evento não localizado") }
+                    ?: throw NotAutorizationException(USER_NOT_FOUND)
+    val event = repository.findById(eventId).orElseThrow { NotFoundException(EVENT_NOT_FOUND) }
     event.takeIf { it.users?.email == email }
-            ?: throw NotAutorizationException("Solicitação não permitida")
+            ?: throw NotAutorizationException(EVENT_NOT_AUTHORIZED)
     if (calendarService.deleteEvent(accessToken, event.eventId!!)) repository.delete(event)
   }
 
   private fun validAttEvent(googleEvent: EventItem, event: Events) {
     val updateGogle = parseToLocalDateTime(googleEvent.updated)
     if (updateGogle.isAfter(event.updatedAt))
-            save(EventsMapper.fromEventItem(event.id!!,event.users!!, googleEvent))
+            save(EventsMapper.fromEventItem(event.id!!, event.users!!, googleEvent))
   }
 
   private fun save(event: Events): Events =

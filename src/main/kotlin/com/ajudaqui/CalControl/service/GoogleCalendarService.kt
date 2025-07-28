@@ -1,7 +1,5 @@
 package com.ajudaqui.CalControl.service
 
-// import org.springframework.format.annotation.DateTimeFormat
-import com.ajudaqui.CalControl.dto.EventCreateDateTime
 import com.ajudaqui.CalControl.dto.EventCreateRequest
 import com.ajudaqui.CalControl.dto.EventItemUpdateDto
 import com.ajudaqui.CalControl.exceprion.custon.MessageException
@@ -127,10 +125,6 @@ class GoogleCalendarService(val authGoogle: GoogleOAuthService) {
     eventItemDtop.description.takeIf { it.isNotBlank() }?.let { currentEvent["description"] = it }
     eventItemDtop.summary.takeIf { it.isNotBlank() }?.let { currentEvent["summary"] = it }
 
-    // if (currentEvent != null) {
-    //   currentEvent["description"] = eventItemDtop.description
-
-    // }
     val url = "$url/$calendarId/events/$eventId"
     val headers =
             HttpHeaders().apply {
@@ -181,48 +175,4 @@ class GoogleCalendarService(val authGoogle: GoogleOAuthService) {
       "Problema na comunicação com a API da Google"
     }
   }
-
-  private fun factoryEvemtRequest(): EventCreateRequest =
-          EventCreateRequest(
-                  summary = "Reunião de Teste",
-                  // description = "Descrição do evento de teste",
-                  description =
-                          """
-    Reunião para revisar o projeto.
-
-    Agenda:
-    - Item 1
-    - Item 2
-
-    Mais informações: https://meusite.com/reuniao
-""".trimIndent(),
-                  location = "Recife",
-                  start = EventCreateDateTime(dateTime = "2025-08-01T10:00:00-03:00"),
-                  end = EventCreateDateTime(dateTime = "2025-08-01T11:00:00-03:00")
-          )
-
-  private fun factorEvent(): EventItem =
-          EventItem(
-                  kind = "calendar#event",
-                  etag = "",
-                  id = "",
-                  status = "confirmed",
-                  htmlLink = "",
-                  created = "",
-                  updated = "",
-                  summary = "Reunião de Teste",
-                  description = "Descrição do evento de teste",
-                  location = "Recife",
-                  creator = Creator(email = "gustavo910@gmail.com", self = true),
-                  organizer = Organizer(email = "gustavo910@gmail.com", self = true),
-                  start = EventDateTime(dateTime = "2025-08-01T10:00:00-03:00"),
-                  end = EventDateTime(dateTime = "2025-08-01T11:00:00-03:00"),
-                  transparency = null,
-                  visibility = null,
-                  iCalUID = "",
-                  sequence = 0,
-                  attendees = null,
-                  reminders = Reminders(useDefault = true, overrides = null),
-                  eventType = "default"
-          )
 }
