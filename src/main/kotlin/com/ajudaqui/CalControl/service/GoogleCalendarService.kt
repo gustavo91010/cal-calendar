@@ -141,7 +141,7 @@ class GoogleCalendarService(val authGoogle: GoogleOAuthService) {
     }
   }
 
-  fun deleteEvent(accessToken: String, eventId: String) {
+  fun deleteEvent(accessToken: String, eventId: String): Boolean {
     val url = "$url/primary/events/$eventId"
     val validAccessToken = authGoogle.checkingValidAccessToken(accessToken)
 
@@ -151,8 +151,9 @@ class GoogleCalendarService(val authGoogle: GoogleOAuthService) {
               setBearerAuth(validAccessToken)
             }
     val entity = HttpEntity<String>(headers)
-    try {
+    return try {
       RestTemplate().exchange(url, HttpMethod.DELETE, entity, Void::class.java)
+      true
     } catch (e: HttpClientErrorException) {
       throw MessageException(handlerErrorGoogle(e))
     }

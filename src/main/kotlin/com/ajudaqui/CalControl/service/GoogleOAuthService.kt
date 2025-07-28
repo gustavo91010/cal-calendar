@@ -6,6 +6,7 @@ import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.*
 import org.springframework.stereotype.Service
@@ -20,6 +21,7 @@ class GoogleOAuthService(
         @Value("\${google.redirect.uri}") private val redirectUri: String,
 ) {
 
+  private val logger = LoggerFactory.getLogger(GoogleOAuthService::class.java)
   fun exchangeCodeForToken(code: String): Map<String, Any>? {
     val url = "https://oauth2.googleapis.com/token"
     val body =
@@ -58,8 +60,8 @@ class GoogleOAuthService(
     return "Autenticação conluida"
   }
 
-  fun refreshAccessTokenByAccessToken(accessToken: String): Map<String, String> =
-          mapOf("accessToken" to refreshTokeyByUser(usersService.findByAccessToken(accessToken)))
+  // fun refreshAccessTokenByAccessToken(accessToken: String): Map<String, String> =
+  //         mapOf("accessToken" to refreshTokeyByUser(usersService.findByAccessToken(accessToken)))
 
   fun refreshAccessTokenByHttp(email: String): Map<String, String> =
           mapOf("accessToken" to refreshTokeyByUser(usersService.findByEmail(email)))
@@ -100,7 +102,8 @@ class GoogleOAuthService(
               expirationTime.isAfter(LocalDateTime.now())
             }
             ?.accessToken
-            ?: refreshTokeyByUser(user)
+            ?: refreshTokeyByUser(user).also {
+              logger.info("AccessToken para email: ${user.email} foi atualizado")
+            }
   }
-
 }
