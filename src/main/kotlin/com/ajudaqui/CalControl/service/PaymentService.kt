@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service
 class PaymentService(private val eventService: EventsService) {
 
   fun create(email: String, paymentDto: PaymentDto): Events {
+    println(factorDescription(paymentDto))
     val eventCreate =
             EventCreateRequest(
                     summary = "Contas a pagar",
@@ -24,19 +25,26 @@ class PaymentService(private val eventService: EventsService) {
 
     val blocos =
             paymentDto.paymentData.joinToString("\n") { (id, description, value, status, link) ->
-              """
-    <div>
-      <span>($status) </span>
-      <strong>$description:</strong> R$ ${value.toString()}
-      <a href="$link/$id" target="_blank"
-         style="display:inline-block; padding:3px 8px; background:#4CAF50; color:#fff;
-         text-decoration:none; border-radius:5px; margin-left:10px;">
-        Pago
-      </a>
-    </div>
-    """.trimIndent()
+              """<li>
+  <strong>Descrição:</strong> $description 
+  <strong>Valor:</strong> R$ $value
+  <strong>Status:</strong> $status 
+  <a href="$link/$id" target="_blank"
+     style="
+       margin-left: 10px;
+       padding: 4px 12px;
+       background-color: #4CAF50;
+       color: white;
+       text-decoration: none;
+       border-radius: 5px;
+       font-weight: bold;
+       display: inline-block;
+     ">Confirmar pagamento</a></li>""".trimIndent()
             }
 
-    return template.replace("<!-- Lista de contas -->", blocos)
+    return template.replace(
+            "<!-- Lista de contas -->",
+            "<ul style=\"list-style:none; padding:0; margin:0;\">\n$blocos\n</ul>"
+    )
   }
 }
