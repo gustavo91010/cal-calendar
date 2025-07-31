@@ -9,15 +9,14 @@ import org.springframework.stereotype.Service
 @Service
 class PaymentService(private val eventService: EventsService) {
 
-  fun create(email: String, paymentDto: PaymentDto): Events {
-    println(factorDescription(paymentDto))
+  fun create( paymentDto: PaymentDto): Events {
     val eventCreate =
             EventCreateRequest(
                     summary = "Contas a pagar",
                     description = factorDescription(paymentDto),
                     day = paymentDto.day
             )
-    return eventService.create(email, eventCreate)
+    return eventService.create(paymentDto.email, eventCreate)
   }
 
   private fun factorDescription(paymentDto: PaymentDto): String {

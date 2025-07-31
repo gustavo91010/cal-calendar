@@ -13,9 +13,9 @@ class PaymentController(private val paymentService: PaymentService) {
 
   @PostMapping("")
   fun createEvent(
-          @RequestHeader("Authorization") email: String,
+          // @RequestHeader("Authorization") email: String,
           @RequestBody @Valid payment: PaymentDto
-  ): ResponseEntity<Events> = ResponseEntity.ok(paymentService.create(email, payment))
+  ): ResponseEntity<Events> = ResponseEntity.ok(paymentService.create(payment))
 
   fun updateEvent() {}
 }
