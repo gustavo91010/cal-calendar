@@ -1,29 +1,19 @@
 package com.ajudaqui.CalControl.controller
 
 import com.ajudaqui.CalControl.dto.MessageDTO
-import org.springframework.web.bind.annotation.RequestHeader
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
+import jakarta.validation.Valid
 
 @RestController
 @RequestMapping("/v1/message")
 class MessageController {
-  fun push(@RequestHeader("Authorization") token: String, data: MessageDTO) {
-    println("tokem " + token)
+
+  @PostMapping("")
+  fun push(@RequestHeader("Authorization") token: String, @RequestBody @Valid data: MessageDTO): Map<String, String> {
     println("payload: " + data)
+
+
+    return mapOf("message" to "Mensagem recebida com sucesso.")
+
   }
-
-  // @RestController
-  // @RequestMapping("/v1/message")
-  // class MessageController {
-  //     fun push(
-  //         @RequestHeader("Authorization") token: String
-  //         data: MessageDTO
-  //  saAD       sadasa
-  //         sdadasd
-
-  //     ) {
-  //         println("tokem de autenticação " + token)
-  //         println("o payload foi: " + data.payload)
-  //     }
 }

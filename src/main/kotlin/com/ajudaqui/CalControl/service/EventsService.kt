@@ -51,7 +51,6 @@ class EventsService(
   }
 
   fun findById(email: String, eventId: Long): Events {
-    sadasd
     val accessToken = usersService.findByEmail(email).accessToken!!
     val event = repository.findById(eventId).orElseThrow { NotFoundException(EVENT_NOT_FOUND) }
     event.takeIf { it.users?.email == email }
