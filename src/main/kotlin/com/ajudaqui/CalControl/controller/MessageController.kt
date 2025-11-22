@@ -8,6 +8,14 @@ import jakarta.validation.Valid
 @RequestMapping("/v1/message")
 class MessageController {
 
+  @PostMapping("/template")
+  fun registerTemplate(@RequestHeader("Authorization") token: String, @RequestBody @Valid data: MessageDTO): Map<String, String> {
+    println("template: " + data)
+
+
+    return mapOf("message" to "Mensagem recebida com sucesso.")
+
+  }
   @PostMapping("")
   fun push(@RequestHeader("Authorization") token: String, @RequestBody @Valid data: MessageDTO): Map<String, String> {
     println("payload: " + data)
