@@ -28,21 +28,21 @@ class TemplateService(
 
   fun registerMessage(message: MessageDTO) {
 
-    val lalala = findByTypeAndApplication(message.type, message.application)
-    print(lalala)
+    val template = findByTypeAndApplication(message.type, message.application)
+
     val eventCreate =
             EventCreateRequest(
                     summary = "Contas a pagar",
-                    description = lalala.template,
+                    description = template.template,
                     day = message.day
             )
+
     eventService.create(message.email, eventCreate)
   }
 
   private fun findByTypeAndApplication(type: String, application: String): EventTemplate =
-          repository.findByTypeAndApplication(type, application).orElseThrow {
-            NotFoundException("Template não registrado")
-          }
+          repository.findFirstByTypeAndApplication(type, application)
+                  ?: throw NotFoundException("Template não registrado")
 
   private fun save(template: EventTemplate): EventTemplate = repository.save(template)
 }

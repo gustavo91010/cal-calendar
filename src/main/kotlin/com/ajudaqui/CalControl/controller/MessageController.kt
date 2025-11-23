@@ -8,24 +8,22 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/v1/message")
-class MessageController(private val usersService: TemplateService) {
+class MessageController(private val messageService: TemplateService) {
 
   @PostMapping("/template")
-  fun registerTemplate(
-          @RequestHeader("Authorization") token: String,
-          @RequestBody templateDTO: TemplateDTO
-  ): Map<String, String> {
+  fun registerTemplate(@RequestBody templateDTO: TemplateDTO): Map<String, String> {
 
-    usersService.create(templateDTO)
+    messageService.create(templateDTO)
 
-    return mapOf("message" to "Mensagem recebida com sucesso.")
+    return mapOf(
+            "message" to
+                    "Template registrado para aplicação ${templateDTO.application} no evento: ${templateDTO.eventType}"
+    )
   }
+
   @PostMapping("")
-  fun push(
-          @RequestHeader("Authorization") token: String,
-          @RequestBody @Valid data: MessageDTO
-  ): Map<String, String> {
-    println("payload: " + data)
+  fun push(@RequestBody @Valid data: MessageDTO): Map<String, String> {
+    messageService.registerMessage(data)
 
     return mapOf("message" to "Mensagem recebida com sucesso.")
   }
