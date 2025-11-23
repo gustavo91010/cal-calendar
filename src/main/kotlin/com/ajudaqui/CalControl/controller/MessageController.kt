@@ -1,27 +1,30 @@
 package com.ajudaqui.CalControl.controller
 
 import com.ajudaqui.CalControl.dto.MessageDTO
-import org.springframework.web.bind.annotation.*
+import com.ajudaqui.CalControl.service.TemplateService
 import jakarta.validation.Valid
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/v1/message")
-class MessageController {
+class MessageController(private val usersService: TemplateService) {
 
   @PostMapping("/template")
-  fun registerTemplate(@RequestHeader("Authorization") token: String, @RequestBody @Valid data: MessageDTO): Map<String, String> {
+  fun registerTemplate(
+          @RequestHeader("Authorization") token: String,
+          @RequestBody @Valid data: MessageDTO
+  ): Map<String, String> {
     println("template: " + data)
-
-
+    usersService.create(template)
     return mapOf("message" to "Mensagem recebida com sucesso.")
-
   }
   @PostMapping("")
-  fun push(@RequestHeader("Authorization") token: String, @RequestBody @Valid data: MessageDTO): Map<String, String> {
+  fun push(
+          @RequestHeader("Authorization") token: String,
+          @RequestBody @Valid data: MessageDTO
+  ): Map<String, String> {
     println("payload: " + data)
 
-
     return mapOf("message" to "Mensagem recebida com sucesso.")
-
   }
 }

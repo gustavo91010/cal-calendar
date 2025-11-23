@@ -6,11 +6,11 @@ import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.LocalDateTime
 
-@Document("template")
-open class Template(
+@Document("event_template")
+open class EventTemplate(
         @Id val id: String? = null,
         @CreatedDate var createdAt: LocalDateTime = LocalDateTime.now(),
         val type: ETemplate,
-        val email: String,
+        val application: String,
         val template: String
 ) {}

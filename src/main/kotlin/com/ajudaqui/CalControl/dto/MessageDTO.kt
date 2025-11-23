@@ -10,5 +10,7 @@ data class MessageDTO(
         message = "O campo day deve estar no formato yyyy-MM-dd",
     )
     val day: String,
+    val application: String,
+    val type: String,
     val payload: Map<String, String>,
 )
