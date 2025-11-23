@@ -1,6 +1,7 @@
 package com.ajudaqui.CalControl.controller
 
 import com.ajudaqui.CalControl.dto.MessageDTO
+import com.ajudaqui.CalControl.dto.TemplateDTO
 import com.ajudaqui.CalControl.service.TemplateService
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
@@ -12,10 +13,11 @@ class MessageController(private val usersService: TemplateService) {
   @PostMapping("/template")
   fun registerTemplate(
           @RequestHeader("Authorization") token: String,
-          @RequestBody @Valid data: MessageDTO
+          @RequestBody templateDTO: TemplateDTO
   ): Map<String, String> {
-    println("template: " + data)
-    usersService.create(template)
+
+    usersService.create(templateDTO)
+
     return mapOf("message" to "Mensagem recebida com sucesso.")
   }
   @PostMapping("")
