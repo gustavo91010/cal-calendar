@@ -2,18 +2,18 @@ package com.ajudaqui.CalControl.controller
 
 import com.ajudaqui.CalControl.dto.MessageDTO
 import com.ajudaqui.CalControl.dto.TemplateDTO
-import com.ajudaqui.CalControl.service.TemplateService
+import com.ajudaqui.CalControl.service.EventApplicationService
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/v1/message")
-class MessageController(private val messageService: TemplateService) {
+class EventApplicationContoller(private val messageService: EventApplicationService) {
 
   @PostMapping("/template")
   fun registerTemplate(@RequestBody templateDTO: TemplateDTO): Map<String, String> {
 
-    messageService.create(templateDTO)
+    messageService.registerTemplate(templateDTO)
 
     return mapOf(
             "message" to
@@ -23,7 +23,7 @@ class MessageController(private val messageService: TemplateService) {
 
   @PostMapping("")
   fun push(@RequestBody @Valid data: MessageDTO): Map<String, String> {
-    messageService.registerMessage(data)
+    messageService.createGoogleEvent(data)
 
     return mapOf("message" to "Mensagem recebida com sucesso.")
   }

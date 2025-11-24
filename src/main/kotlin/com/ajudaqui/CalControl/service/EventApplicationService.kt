@@ -1,5 +1,6 @@
 package com.ajudaqui.CalControl.service
 
+// import io.github.resilience4j.circuitbreaker.CircuitBreaker
 import com.ajudaqui.CalControl.dto.EventCreateRequest
 import com.ajudaqui.CalControl.dto.MessageDTO
 import com.ajudaqui.CalControl.dto.TemplateDTO
@@ -7,15 +8,17 @@ import com.ajudaqui.CalControl.entity.EventTemplate
 import com.ajudaqui.CalControl.exceprion.custon.NotFoundException
 import com.ajudaqui.CalControl.repository.TemplateRepository
 import com.ajudaqui.CalControl.utils.enum.ETemplate
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker
 import org.springframework.stereotype.Service
 
 @Service
-class TemplateService(
+class EventApplicationService(
         private val repository: TemplateRepository,
+        private val mongoBreaker: CircuitBreaker,
         private val eventService: EventsService
 ) {
 
-  fun create(data: TemplateDTO): EventTemplate {
+  fun registerTemplate(data: TemplateDTO): EventTemplate {
 
     val template =
             EventTemplate(
@@ -26,7 +29,7 @@ class TemplateService(
     return save(template)
   }
 
-  fun registerMessage(message: MessageDTO) {
+  fun createGoogleEvent(message: MessageDTO) {
 
     val template = findByTypeAndApplication(message.type, message.application)
 
@@ -41,8 +44,24 @@ class TemplateService(
   }
 
   private fun findByTypeAndApplication(type: String, application: String): EventTemplate =
-          repository.findFirstByTypeAndApplication(type, application)
-                  ?: throw NotFoundException("Template não registrado")
+          mongoBreaker.run(
+                  {
+                    repository.findFirstByTypeAndApplication(type, application)
+                            ?: throw NotFoundException("Template não registrado")
+                  },
+                  {
+                    println("Fallback acionado: Mongo fora do ar")
+                    throw IllegalStateException("Mongo fora do ar")
+                  }
+          )
 
-  private fun save(template: EventTemplate): EventTemplate = repository.save(template)
+  // private fun save(template: EventTemplate): EventTemplate = repository.save(template)
+  private fun save(template: EventTemplate): EventTemplate =
+          mongoBreaker.run(
+                  { repository.save(template) },
+                  {
+                    println("Fallback acionado: Mongo fora do ar")
+                    null
+                  }
+          )
 }
